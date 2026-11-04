@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Product, CartLine, CartTotals } from '@/types';
-import { money } from '@/utils/format';
+
 
 export interface CartState {
   tier: 'member' | 'retail';

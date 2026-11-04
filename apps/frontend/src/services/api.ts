@@ -3,6 +3,7 @@
  * Handles auth tokens, error normalization, and base URL resolution.
  */
 
+/// <reference types="vite/client" />
 import { ApiResponse } from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
@@ -92,7 +93,7 @@ async function request<T>(
 
 export const api = {
   // ── Auth ──────────────────────────────────────────────────────────────────
-  shopLogin: (pin: string, ip?: string) =>
+  shopLogin: (pin: string) =>
     request<{ token: string; refresh_token: string; expires_at: string; shop: any }>(
       '/api/v1/auth/login',
       { method: 'POST', body: { pin }, auth: false }

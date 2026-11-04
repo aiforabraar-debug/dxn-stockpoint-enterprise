@@ -29,7 +29,7 @@ export interface AuthState {
   setToken: (token: string | null) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore: any = create(
   persist(
     (set: any) => ({
       isAuthenticated: false,

@@ -161,8 +161,8 @@ export function Settings() {
                 <Input name="threshold" type="number" defaultValue={s.low_stock_threshold} />
               </div>
             </div>
-            <Button type="submit" disabled={updateSettingsMutation.isLoading}>
-              {updateSettingsMutation.isLoading ? 'Saving…' : 'Save Shop Profile'}
+            <Button type="submit" disabled={updateSettingsMutation.isPending}>
+              {updateSettingsMutation.isPending ? 'Saving…' : 'Save Shop Profile'}
             </Button>
           </form>
         </div>
