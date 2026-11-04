@@ -154,18 +154,18 @@ export const useCartStore = create<CartState>()(
       name: 'dxn-cart-v2',
       storage: createJSONStorage(() => localStorage),
       // Custom serializer to handle Map
-      serialize: (state) => {
+      serialize: (state: any) => {
         const linesArray = Array.from(state.lines.entries());
         return JSON.stringify({ ...state, lines: linesArray });
       },
-      deserialize: (str) => {
+      deserialize: (str: string) => {
         const parsed = JSON.parse(str);
         if (parsed.lines && Array.isArray(parsed.lines)) {
           parsed.lines = new Map(parsed.lines);
         }
         return parsed;
       },
-      partialize: (state) => ({
+      partialize: (state: any) => ({
         tier: state.tier,
         lines: state.lines,
         customerName: state.customerName,

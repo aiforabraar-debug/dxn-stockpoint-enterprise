@@ -31,7 +31,7 @@ export interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set: any) => ({
       isAuthenticated: false,
       authType: null,
       role: null,

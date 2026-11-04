@@ -23,7 +23,7 @@ export interface SyncState {
   reset: () => void;
 }
 
-export const useSyncStore = create<SyncState>((set) => ({
+export const useSyncStore = create<SyncState>((set: any) => ({
   isConnected: false,
   syncStatus: 'idle',
   revision: 0,
@@ -32,13 +32,13 @@ export const useSyncStore = create<SyncState>((set) => ({
   failedCount: 0,
   errorMessage: null,
 
-  setConnected: (connected) => set({ isConnected: connected }),
-  setSyncStatus: (status) => set({ syncStatus: status }),
-  setRevision: (rev) => set({ revision: rev }),
-  setLastSyncAt: (at) => set({ lastSyncAt: at }),
-  setOutboxCount: (count) => set({ outboxCount: count }),
-  setFailedCount: (count) => set({ failedCount: count }),
-  setError: (message) => set({ errorMessage: message }),
+  setConnected: (connected: boolean) => set({ isConnected: connected }),
+  setSyncStatus: (status: any) => set({ syncStatus: status }),
+  setRevision: (rev: number) => set({ revision: rev }),
+  setLastSyncAt: (at: number | null) => set({ lastSyncAt: at }),
+  setOutboxCount: (count: number) => set({ outboxCount: count }),
+  setFailedCount: (count: number) => set({ failedCount: count }),
+  setError: (message: string | null) => set({ errorMessage: message }),
 
   reset: () => set({
     isConnected: false,
