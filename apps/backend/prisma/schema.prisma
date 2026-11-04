@@ -1,0 +1,332 @@
+// =============================================================================
+// DXN Stockpoint Enterprise — Prisma Schema
+// PostgreSQL database for production-grade reliability
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BKASH
+  NAGAD
+  CARD
+  BANK_TRANSFER
+}
+
+enum OrderSource {
+  WEB
+  ANDROID
+  ADMIN
+}
+
+enum StockMovementReason {
+  SALE
+  DELIVERY
+  ADJUSTMENT
+  DAMAGED
+  RETURN
+  SAMPLE
+  STOCK_TAKE
+}
+
+enum CourierStatus {
+  IN_REVIEW
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  RETURNED
+  EXCEPTION
+  CANCELLED
+}
+
+// ── Shop ─────────────────────────────────────────────────────────────────────
+model Shop {
+  id                String   @id(default: uuid()) @db.Uuid
+  name              String   @db.VarChar(120)
+  slug              String   @unique @db.VarChar(80)
+  whatsapp_number   String?  @db.VarChar(40)
+  currency          String   @default("BDT") @db.VarChar(8)
+  low_stock_threshold Int    @default(5)
+  business_phone    String?  @db.VarChar(40)
+  business_address  String?  @db.VarChar(200)
+  receipt_footer    String?  @db.VarChar(300)
+  admin_pin_hash    String   @db.VarChar(255)
+  admin_api_key     String?  @unique @db.VarChar(255)
+  allow_public_orders Boolean @default(true)
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  users        User[]
+  products     Product[]
+  customers    Customer[]
+  orders       Order[]
+  stockMovements StockMovement[]
+  courierSettings CourierSetting?
+  auditLogs    AuditLog[]
+
+  @@index([slug])
+  @@index([is_active])
+}
+
+// ── User / Staff ─────────────────────────────────────────────────────────────
+model User {
+  id            String   @id(default: uuid()) @db.Uuid
+  shopId        String   @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @db.VarChar(255)
+  fullName      String   @db.VarChar(120)
+  role          String   @default("cashier") @db.VarChar(20) // admin, cashier, viewer
+  is_active     Boolean  @default(true)
+  last_login_at DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders        Order[]
+
+  @@index([shopId])
+  @@index([email])
+}
+
+// ── Auth Session / Token ─────────────────────────────────────────────────────
+model AuthSession {
+  id            String   @id(default: uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  shopId        String   @db.Uuid
+  refreshToken  String   @unique @db.Text
+  userAgent     String?  @db.Text
+  ipAddress     String?  @db.VarChar(45)
+  expires_at    DateTime
+  revoked_at    DateTime?
+  created_at    DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop  Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([shopId])
+  @@index([expires_at])
+}
+
+// ── Auth Attempt (brute force protection) ────────────────────────────────────
+model AuthAttempt {
+  id          String   @id(default: uuid()) @db.Uuid
+  shopId      String   @db.Uuid
+  ipAddress   String   @db.VarChar(45)
+  succeeded   Boolean  @default(false)
+  attemptedAt DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([ipAddress])
+  @@index([attemptedAt])
+}
+
+// ── Product ──────────────────────────────────────────────────────────────────
+model Product {
+  id                String          @id(default: uuid()) @db.Uuid
+  shopId            String          @db.Uuid
+  sku               String          @db.VarChar(64)
+  name              String          @db.VarChar(160)
+  description       String?         @db.Text
+  category          String          @default("General") @db.VarChar(64)
+  retail_price      Decimal         @default(0) @db.Decimal(12, 2)
+  member_price      Decimal         @default(0) @db.Decimal(12, 2)
+  pv_points         Decimal         @default(0) @db.Decimal(10, 2)
+  stock_qty         Int             @default(0)
+  low_stock_at      Int             @default(5)
+  image_url         String?         @db.VarChar(500)
+  is_active         Boolean         @default(true)
+  revision          Int             @default(0)
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+
+  shop       Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  movements  StockMovement[]
+
+  @@unique([shopId, sku])
+  @@index([shopId])
+  @@index([sku])
+  @@index([category])
+  @@index([is_active])
+  @@index([revision])
+}
+
+// ── Customer ─────────────────────────────────────────────────────────────────
+model Customer {
+  id           String   @id(default: uuid()) @db.Uuid
+  shopId       String   @db.Uuid
+  name         String   @db.VarChar(160)
+  phone        String?  @db.VarChar(40)
+  member_id    String?  @unique @db.VarChar(40)
+  is_member    Boolean  @default(false)
+  total_orders Int      @default(0)
+  total_spent  Decimal  @default(0) @db.Decimal(12, 2)
+  total_pv     Decimal  @default(0) @db.Decimal(10, 2)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  shop   Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([shopId])
+  @@index([member_id])
+  @@index([phone])
+}
+
+// ── Order ────────────────────────────────────────────────────────────────────
+model Order {
+  id              String        @id(default: uuid()) @db.Uuid
+  shopId          String        @db.Uuid
+  userId          String?       @db.Uuid
+  customerId      String?       @db.Uuid
+  client_uuid     String?       @unique @db.VarChar(128)
+  order_number    String        @db.VarChar(64)
+  customer_name   String        @db.VarChar(160)
+  customer_phone  String?       @db.VarChar(40)
+  dxn_member_id   String?       @db.VarChar(40)
+  is_member       Boolean       @default(false)
+  payment_method  PaymentMethod @default(CASH)
+  subtotal        Decimal       @db.Decimal(12, 2)
+  discount        Decimal       @default(0) @db.Decimal(12, 2)
+  total_amount    Decimal       @db.Decimal(12, 2)
+  total_pv        Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(CONFIRMED)
+  source          OrderSource   @default(WEB)
+  note            String?       @db.Text
+  revision        Int           @default(0)
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  shop         Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customer     Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  courierOrder CourierOrder?
+
+  @@index([shopId])
+  @@index([order_number])
+  @@index([client_uuid])
+  @@index([status])
+  @@index([created_at])
+  @@index([source])
+}
+
+// ── Order Item ───────────────────────────────────────────────────────────────
+model OrderItem {
+  id          String   @id(default: uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  productId   String   @db.Uuid
+  sku         String   @db.VarChar(64)
+  name        String   @db.VarChar(160)
+  quantity    Int
+  unit_price  Decimal  @db.Decimal(12, 2)
+  unit_pv     Decimal  @db.Decimal(10, 2)
+  line_total  Decimal  @db.Decimal(12, 2)
+
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ── Stock Movement (audit trail) ─────────────────────────────────────────────
+model StockMovement {
+  id          String             @id(default: uuid()) @db.Uuid
+  shopId      String             @db.Uuid
+  productId   String             @db.Uuid
+  orderId     String?            @db.Uuid
+  reason      StockMovementReason
+  delta       Int                // positive = in, negative = out
+  quantity_after Int
+  reference   String?            @db.VarChar(128) // order number, client uuid, etc.
+  created_at  DateTime         @default(now())
+
+  shop      Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product   Product    @relation(fields: [productId], references: [id])
+  order     Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([productId])
+  @@index([reason])
+  @@index([created_at])
+}
+
+// ── Courier Settings ─────────────────────────────────────────────────────────
+model CourierSetting {
+  id           String   @id(default: uuid()) @db.Uuid
+  shopId       String   @unique @db.Uuid
+  base_url     String   @default("https://portal.packzy.com/api/v1") @db.VarChar(500)
+  api_key      String?  @db.VarChar(500)
+  secret_key   String?  @db.VarChar(500)
+  webhook_token String? @db.VarChar(500)
+  is_configured Boolean @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+// ── Courier Order ────────────────────────────────────────────────────────────
+model CourierOrder {
+  id                 String      @id(default: uuid()) @db.Uuid
+  shopId             String      @db.Uuid
+  orderId            String      @unique @db.Uuid
+  consignment_id     String?     @db.VarChar(128)
+  tracking_code      String?     @db.VarChar(128)
+  courier_status     CourierStatus @default(IN_REVIEW)
+  recipient_address  String?     @db.Text
+  cod_amount         Decimal?    @db.Decimal(12, 2)
+  item_description   String?     @db.VarChar(255)
+  awb_label_url      String?     @db.VarChar(500)
+  created_at         DateTime    @default(now())
+  updated_at         DateTime    @updatedAt
+
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([consignment_id])
+  @@index([courier_status])
+}
+
+// ── Audit Log ────────────────────────────────────────────────────────────────
+model AuditLog {
+  id        String   @id(default: uuid()) @db.Uuid
+  shopId    String   @db.Uuid
+  userId    String?  @db.Uuid
+  action    String   @db.VarChar(100)
+  entity    String   @db.VarChar(100)
+  entity_id String?  @db.VarChar(128)
+  old_values Json?
+  new_values Json?
+  ip_address String? @db.VarCat(45)
+  created_at DateTime @default(now())
+
+  shop  Shop  @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([action])
+  @@index([created_at])
+}
