@@ -54,7 +54,7 @@ export const useCartStore = create<CartState>()(
 
       setTier: (tier) => set({ tier }),
 
-      addItem: (product, qty = 1) => {
+      addItem: (product: Product, qty = 1) => {
         const state = get();
         const existing = state.lines.get(product.id);
         const nextQty = (existing?.qty || 0) + qty;
@@ -77,13 +77,13 @@ export const useCartStore = create<CartState>()(
         return { ok: true };
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId: string) => {
         const lines = new Map(get().lines);
         lines.delete(productId);
         set({ lines });
       },
 
-      setQty: (productId, qty) => {
+      setQty: (productId: string, qty: number) => {
         const lines = new Map(get().lines);
         const target = Math.max(0, Math.round(qty));
         if (target <= 0) {
@@ -96,11 +96,11 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => set({ ...DEFAULT_STATE, lines: new Map() }),
 
-      setCustomer: (patch) => {
+      setCustomer: (patch: any) => {
         set({ ...patch });
       },
 
-      getTotals: (products) => {
+      getTotals: (products: Map<string, Product>) => {
         const lines: CartLine[] = [];
         let subtotal = 0;
         let discount = 0;
@@ -146,7 +146,7 @@ export const useCartStore = create<CartState>()(
         };
       },
 
-      getLine: (productId) => {
+      getLine: (productId: string) => {
         return get().lines.get(productId);
       },
     }),
