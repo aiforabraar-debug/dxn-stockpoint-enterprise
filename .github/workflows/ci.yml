@@ -1,7 +1,3 @@
-# =============================================================================
-# DXN Stockpoint Enterprise — CI/CD Pipeline
-# =============================================================================
-
 name: CI/CD
 
 on:
@@ -18,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: enterprise/apps/backend
+        working-directory: apps/backend
     services:
       postgres:
         image: postgres:16-alpine
@@ -68,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: enterprise/apps/frontend
+        working-directory: apps/frontend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
