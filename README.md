@@ -2,7 +2,10 @@
 
 Enterprise-grade offline-first POS & inventory management platform for DXN distributors.
 
-[![CI/CD](https://github.com/abraar05/dxn-stockpoint/actions/workflows/ci.yml/badge.svg)](https://github.com/abraar05/dxn-stockpoint/actions/workflows/ci.yml)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aiforabraar-debug/dxn-stockpoint-enterprise)
+[![CI/CD](https://github.com/aiforabraar-debug/dxn-stockpoint-enterprise/actions/workflows/ci.yml/badge.svg)](https://github.com/aiforabraar-debug/dxn-stockpoint-enterprise/actions/workflows/ci.yml)
+[![Web App](https://img.shields.io/badge/Web%20App-Live%20on%20GitHub%20Pages-success)](https://aiforabraar-debug.github.io/dxn-stockpoint-enterprise/)
+[![Android APK](https://img.shields.io/badge/Android%20APK-v2.0.0-blue)](https://github.com/aiforabraar-debug/dxn-stockpoint-enterprise/releases/download/v2.0.0/app-debug.apk)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://docker.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://postgresql.org/)
