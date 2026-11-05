@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, RefreshCw, Print, Send, Receipt } from 'lucide-react';
+import { Search, RefreshCw, Printer, Send, Receipt } from 'lucide-react';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { Card } from '@/components/ui/Card';
@@ -229,7 +229,7 @@ export function Orders() {
                           onClick={() => handlePrint(order)}
                           className="text-gray-500 hover:text-primary-600"
                         >
-                          <Print className="w-4 h-4" />
+                          <Printer className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"

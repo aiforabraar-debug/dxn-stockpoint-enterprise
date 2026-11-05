@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { Plus, Minus, Trash2, Check, Wallet, Print, Send, X } from 'lucide-react';
+import { Plus, Minus, Trash2, Check, Wallet, Printer, Send, X } from 'lucide-react';
 import { useCartStore } from '@/stores/cart';
 import { Product } from '@/types';
 import { money, formatPv } from '@/utils/format';

@@ -3,7 +3,7 @@
  */
 
 import { Product } from '@/types';
-import { Plus, AlertCircle, Check2 } from 'lucide-react';
+import { Plus, AlertCircle, Check } from 'lucide-react';
 import { useCartStore } from '@/stores/cart';
 import { money } from '@/utils/format';
 import { cn } from '@/utils/cn';
@@ -94,7 +94,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
             <span>Sold Out</span>
           ) : isAdded ? (
             <>
-              <Check2 className="w-4 h-4" />
+              <Check className="w-4 h-4" />
               <span>Added</span>
             </>
           ) : (
