@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Grid, Receipt, BarChart3, Settings, User, Cart, RefreshCw, Logout } from 'lucide-react';
+import { Grid, Receipt, BarChart3, Settings, User, ShoppingCart, RefreshCw, Logout } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { useSyncStore } from '@/stores/sync';
 import { cn } from '@/utils/cn';
@@ -67,7 +67,7 @@ export function Header({ shop, onSignOut }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-3">
-            <IconButton icon={Cart} badge={0} />
+            <IconButton icon={ShoppingCart} badge={0} />
             <IconButton icon={User} onClick={() => setUserMenuOpen(true)} />
           </div>
         </div>
