@@ -1,45 +1,50 @@
 # =============================================================================
 # DXN Stockpoint Enterprise — Backend Dockerfile
-# Multi-stage build for production-ready image
+# Production multi-stage build for monorepo root context
 # =============================================================================
 
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache openssl libc6-compat
 
-# ── Install dependencies ─────────────────────────────────────────────────────
-FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
-COPY package.json package-lock.json* ./
+# Copy workspace package manifests
+COPY package.json package-lock.json ./
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
+
+# Install dependencies for all workspaces
 RUN npm ci
 
-# ── Prisma generate ──────────────────────────────────────────────────────────
-FROM deps AS prisma
-COPY prisma ./prisma
-RUN npx prisma generate
+# Copy backend source & prisma schema
+COPY apps/backend/tsconfig.json ./apps/backend/
+COPY apps/backend/prisma ./apps/backend/prisma
+COPY apps/backend/src ./apps/backend/src
 
-# ── Build ────────────────────────────────────────────────────────────────────
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY tsconfig.json ./
-COPY src ./src
+# Generate Prisma Client & compile TypeScript
+WORKDIR /app/apps/backend
+RUN npx prisma generate
 RUN npm run build
 
-# ── Runtime ──────────────────────────────────────────────────────────────────
-FROM base AS runner
+# ── Runtime Stage ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
+RUN apk add --no-cache openssl
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nestjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 expressjs
 
-COPY --from=prisma /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/dist ./dist
+# Copy installed dependencies, compiled output and prisma files
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 
-USER nestjs
+WORKDIR /app/apps/backend
+
+USER expressjs
 
 EXPOSE 4000
 
