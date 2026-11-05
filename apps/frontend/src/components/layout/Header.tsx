@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Grid, Receipt, BarChart3, Settings, User, ShoppingCart, RefreshCw, Logout } from 'lucide-react';
+import { Grid, Receipt, BarChart3, Settings, User, ShoppingCart, RefreshCw, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { useSyncStore } from '@/stores/sync';
 import { cn } from '@/utils/cn';
@@ -113,7 +113,7 @@ export function Header({ shop, onSignOut }: HeaderProps) {
             onClick={() => { setUserMenuOpen(false); onSignOut(); }}
             className="w-full justify-start text-left text-sm"
           >
-            <Logout className="w-4 h-4 mr-2" />
+            <LogOut className="w-4 h-4 mr-2" />
             Sign out
           </Button>
         </div>
