@@ -1,5 +1,5 @@
 /**
- * ProductCard — Product card for the catalogue with add-to-cart.
+ * ProductCard - Product card for the catalogue with add-to-cart.
  */
 
 import { Product } from '@/types';
@@ -11,13 +11,17 @@ import { Badge } from '@/components/ui/Badge';
 
 interface ProductCardProps {
   product: Product;
+  tier: 'member' | 'retail';
   onAdd: (product: Product) => { ok: boolean; message?: string };
 }
 
-export function ProductCard({ product, onAdd }: ProductCardProps) {
-  const { addItem, getLine } = useCartStore();
-  const isAdded = getLine(product.id)?.qty ?? 0 > 0;
+export function ProductCard({ product, tier, onAdd }: ProductCardProps) {
+  const { getLine } = useCartStore();
+  const lineQty = getLine(product.id)?.qty ?? 0;
+  const isAdded = lineQty > 0;
   const isOut = product.stock_qty <= 0;
+
+  const displayPrice = tier === 'member' ? product.member_price : product.retail_price;
 
   return (
     <article
@@ -49,7 +53,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-primary-700 uppercase tracking-tighter">
             {product.category}
@@ -59,34 +63,38 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
           </Badge>
         </div>
 
-        <h3 className="font-semibold text-gray-900 leading-tight mb-1">{product.name}</h3>
+        <h3 className="font-semibold text-gray-900 leading-tight mb-1 flex-1">{product.name}</h3>
         <div className="text-xs text-gray-500 mb-3">{product.sku}</div>
 
         <div className="flex items-center justify-between mb-3">
           <div>
             <span className="text-lg font-bold text-gray-900">
-              {money(product.tier === 'member' ? product.member_price : product.retail_price)}
+              {money(displayPrice)}
             </span>
             {product.pv_points > 0 && (
               <span className="ml-2 text-xs text-gray-400">{product.pv_points} PV</span>
             )}
           </div>
+          {tier === 'member' && (
+            <span className="text-xs text-primary-600 font-medium bg-primary-50 px-2 py-0.5 rounded-full">Member</span>
+          )}
         </div>
 
         <button
           onClick={() => {
             const result = onAdd(product);
+            // Toast is shown by parent Catalog page
             if (!result.ok && result.message) {
-              // Toast would be shown by parent
+              // Toast handled upstream
             }
           }}
-          disabled={isOut || isAdded}
+          disabled={isOut}
           className={cn(
             'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none',
             isOut
               ? 'bg-gray-100 text-gray-400 border border-gray-200'
               : isAdded
-                ? 'bg-green-500 text-white border border-green-200'
+                ? 'bg-green-500 text-white border border-green-200 hover:bg-green-600'
                 : 'bg-primary-600 text-white border border-transparent hover:bg-primary-700 active:scale-95'
           )}
         >
@@ -95,12 +103,12 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
           ) : isAdded ? (
             <>
               <Check className="w-4 h-4" />
-              <span>Added</span>
+              <span>In Cart ({lineQty})</span>
             </>
           ) : (
             <>
               <Plus className="w-4 h-4" />
-              <span>Add</span>
+              <span>Add to Cart</span>
             </>
           )}
         </button>

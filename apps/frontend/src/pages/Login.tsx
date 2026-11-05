@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Check, AlertCircle } from 'lucide-react';
+import { Lock, Check } from 'lucide-react';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { Card } from '@/components/ui/Card';

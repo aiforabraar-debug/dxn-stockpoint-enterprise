@@ -29,9 +29,9 @@ export interface AuthState {
   setToken: (token: string | null) => void;
 }
 
-export const useAuthStore: any = create(
+export const useAuthStore = create<AuthState>()(
   persist(
-    (set: any) => ({
+    (set) => ({
       isAuthenticated: false,
       authType: null,
       role: null,
@@ -39,7 +39,7 @@ export const useAuthStore: any = create(
       user: null,
       token: null,
 
-      setShopAuth: (shop, token) => {
+      setShopAuth: (shop: { id: string; name: string; slug: string; currency: string }, token: string) => {
         localStorage.setItem('dxn_access_token', token);
         set({
           isAuthenticated: true,
@@ -51,7 +51,7 @@ export const useAuthStore: any = create(
         });
       },
 
-      setStaffAuth: (user, shop, token) => {
+      setStaffAuth: (user: { id: string; email: string; fullName: string; role: string }, shop: any, token: string) => {
         localStorage.setItem('dxn_access_token', token);
         set({
           isAuthenticated: true,
@@ -80,7 +80,7 @@ export const useAuthStore: any = create(
         });
       },
 
-      setToken: (token) => {
+      setToken: (token: string | null) => {
         if (token) {
           localStorage.setItem('dxn_access_token', token);
         } else {

@@ -4,7 +4,7 @@
  */
 
 /// <reference types="vite/client" />
-import { ApiResponse } from '@/types';
+
 
 export function getApiBase(): string {
   if (typeof localStorage !== 'undefined') {

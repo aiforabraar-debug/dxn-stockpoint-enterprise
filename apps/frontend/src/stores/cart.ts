@@ -52,7 +52,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       ...DEFAULT_STATE,
 
-      setTier: (tier) => set({ tier }),
+      setTier: (tier: 'member' | 'retail') => set({ tier }),
 
       addItem: (product: Product, qty = 1) => {
         const state = get();

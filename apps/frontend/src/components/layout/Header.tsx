@@ -1,10 +1,10 @@
 /**
- * Header — App shell header with brand, navigation, sync status, cart, and account.
+ * Header - App shell header with brand, navigation, sync status, cart, and account.
  */
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Grid, Receipt, BarChart3, Settings, User, ShoppingCart, RefreshCw, LogOut } from 'lucide-react';
+import { Grid, Receipt, BarChart3, Settings, User, ShoppingCart, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { useSyncStore } from '@/stores/sync';
 import { cn } from '@/utils/cn';
@@ -33,20 +33,10 @@ export function Header({ shop, onSignOut }: HeaderProps) {
     switch (status) {
       case 'syncing': return 'Syncing…';
       case 'online': return 'Live';
-      case 'pending': return 'Sending…';
+      case 'pending': return 'Pending';
       case 'offline': return 'Offline';
       case 'error': return 'Sync error';
       default: return 'Ready';
-    }
-  };
-
-  const badgeVariant = (status: string) => {
-    switch (status) {
-      case 'online': return 'bg-green-50 text-green-700 border-green-100';
-      case 'pending': return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'offline': return 'bg-red-50 text-red-700 border-red-100';
-      case 'error': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-600 border-gray-200';
     }
   };
 
@@ -61,14 +51,14 @@ export function Header({ shop, onSignOut }: HeaderProps) {
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold leading-tight">{shop?.name || 'DXN Stockpoint'}</span>
               <span className="text-xs text-primary-100 font-medium uppercase tracking-tighter">
-                {auth.isAuthenticated ? 'Admin • Live' : 'Demo Mode'}
+                {auth.isAuthenticated ? 'Admin · Live' : 'Demo Mode'}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 lg:gap-3">
             <IconButton icon={ShoppingCart} badge={0} />
-            <IconButton icon={User} onClick={() => setUserMenuOpen(true)} />
+            <IconButton icon={User} onClick={() => setUserMenuOpen((o) => !o)} />
           </div>
         </div>
 
@@ -97,11 +87,11 @@ export function Header({ shop, onSignOut }: HeaderProps) {
 
         <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-700 to-primary-900 lg:px-6">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/10">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <div className={cn('h-2 w-2 rounded-full', sync.syncStatus === 'offline' || sync.syncStatus === 'error' ? 'bg-red-400' : 'bg-green-500 animate-pulse')} />
             <span className="text-xs font-semibold text-white">{syncLabel(sync.syncStatus)}</span>
-            <span className="text-xs font-semibold text-primary-100">
-              rev {sync.revision}
-            </span>
+            {sync.revision > 0 && (
+              <span className="text-xs font-semibold text-primary-100">rev {sync.revision}</span>
+            )}
           </div>
         </div>
       </div>

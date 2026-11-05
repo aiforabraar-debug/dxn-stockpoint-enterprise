@@ -1,8 +1,8 @@
 /**
- * Input — Styled input component.
+ * Input - Styled input component.
  */
 
-import { HTMLAttributes, forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { cn } from '@/utils/cn';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}

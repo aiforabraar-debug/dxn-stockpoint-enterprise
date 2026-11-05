@@ -10,20 +10,10 @@ import { useAuthStore } from '@/stores/auth';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { money, formatDateTime, formatRelativeTime } from '@/utils/format';
 import { toast } from 'sonner';
 
 const STATUSES = ['ALL', 'CONFIRMED', 'PACKED', 'DELIVERED', 'CANCELLED'] as const;
-
-const statusVariant: Record<string, 'ok' | 'warn' | 'info' | 'danger' | 'muted'> = {
-  PENDING: 'warn',
-  CONFIRMED: 'info',
-  PACKED: 'info',
-  DELIVERED: 'ok',
-  CANCELLED: 'danger',
-  ALL: 'muted',
-};
 
 export function Orders() {
   const { isAuthenticated, shop } = useAuthStore();
@@ -33,10 +23,10 @@ export function Orders() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['orders', search, statusFilter],
     queryFn: async () => {
-      const response = await api.getOrders({
+      const response = (await api.getOrders({
         search: search || undefined,
         status: statusFilter !== 'ALL' ? statusFilter : undefined,
-      });
+      })) as { data?: any[] };
       return response.data || [];
     },
     enabled: isAuthenticated,
@@ -55,10 +45,9 @@ export function Orders() {
   };
 
   const handlePrint = (order: any) => {
-    // Print receipt
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-    const itemsHtml = order.items?.map((item: any) => `
+    const itemsHtml = (order.items || []).map((item: any) => `
       <tr>
         <td>${item.name}</td>
         <td style="text-align:center">${item.quantity}</td>
@@ -67,7 +56,7 @@ export function Orders() {
       </tr>
     `).join('');
 
-    printWindow!.document.write(`
+    printWindow.document.write(`
       <html>
         <head>
           <title>Receipt ${order.order_number}</title>
@@ -93,15 +82,15 @@ export function Orders() {
           </table>
           <div class="total">
             <p>Total: ${money(order.total_amount)}</p>
-            <p>PV: ${order.total_pv.toFixed(2)}</p>
+            <p>PV: ${Number(order.total_pv || 0).toFixed(2)}</p>
             <p>Customer: ${order.customer_name}</p>
             <p>Payment: ${order.payment_method}</p>
           </div>
         </body>
       </html>
     `);
-    printWindow!.document.close();
-    printWindow!.print();
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const handleWhatsApp = (order: any) => {
@@ -132,7 +121,7 @@ export function Orders() {
           <p className="text-gray-600">{orders.length} order(s) in history</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={refetch} size="sm">
+          <Button variant="outline" onClick={() => { refetch(); }} size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -187,7 +176,7 @@ export function Orders() {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     No orders found.
                   </td>
                 </tr>
@@ -214,12 +203,18 @@ export function Orders() {
                       <span className="text-sm font-semibold text-gray-900">{money(order.total_amount)}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm text-gray-500 font-mono">{order.total_pv.toFixed(0)}</span>
+                      <span className="text-sm text-gray-500 font-mono">{Number(order.total_pv || 0).toFixed(0)}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={statusVariant[order.status] || 'muted'}>
-                        {order.status}
-                      </Badge>
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        className="text-xs font-semibold rounded-md border border-gray-200 bg-white px-2 py-1 text-gray-700 cursor-pointer hover:border-gray-300"
+                      >
+                        {STATUSES.filter((s) => s !== 'ALL').map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">

@@ -1,8 +1,7 @@
 /**
- * Switch — Toggle switch component.
+ * Switch - Toggle switch component.
  */
 
-import { useState } from 'react';
 import { cn } from '@/utils/cn';
 
 interface SwitchProps {

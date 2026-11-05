@@ -2,10 +2,12 @@
  * CartDrawer — Slide-over cart with customer details, totals, and checkout.
  */
 
-import { useState } from 'react';
-import { Plus, Minus, Trash2, Check, Wallet, Printer, Send, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Minus, Trash2, Check, Wallet, Send, X } from 'lucide-react';
 import { useCartStore } from '@/stores/cart';
 import { Product } from '@/types';
+import { api } from '@/services/api';
 import { money, formatPv } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +15,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Switch } from '@/components/ui/Switch';
+import { toast } from 'sonner';
 
 const PAYMENT_METHODS = [
   { value: 'CASH', label: 'Cash' },
@@ -23,6 +26,9 @@ const PAYMENT_METHODS = [
 ];
 
 export function CartDrawer() {
+  const queryClient = useQueryClient();
+  const [submitting, setSubmitting] = useState(false);
+
   const {
     lines,
     tier,
@@ -34,7 +40,6 @@ export function CartDrawer() {
     discount,
     note,
     setCustomer,
-    addItem,
     removeItem,
     setQty,
     clearCart,
@@ -50,21 +55,77 @@ export function CartDrawer() {
     discount: state.discount,
     note: state.note,
     setCustomer: state.setCustomer,
-    addItem: state.addItem,
     removeItem: state.removeItem,
     setQty: state.setQty,
     clearCart: state.clearCart,
     getTotals: state.getTotals,
   }));
 
-  const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = (await api.getProducts()) as { data?: Product[] };
+      return res.data || [];
+    },
+  });
 
-  // This would normally be passed from the catalog page
-  // For now, we accept products via a global store or prop
-  // This is a simplified version — in production the drawer receives products via context
+  const productsMap = useMemo(() => {
+    const map = new Map<string, Product>();
+    for (const p of products) {
+      map.set(p.id, p);
+    }
+    return map;
+  }, [products]);
 
   const isOpen = lines.size > 0;
   const totals = getTotals(productsMap);
+
+  const handleCheckout = async () => {
+    if (totals.lines.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload = {
+        customer_name: customerName || 'Walk-in customer',
+        customer_phone: customerPhone || undefined,
+        dxn_member_id: dxnMemberId || undefined,
+        is_member: tier === 'member',
+        payment_method: paymentMethod || 'CASH',
+        discount: discount || 0,
+        note: note || undefined,
+        source: 'WEB' as const,
+        items: totals.lines.map((line) => ({
+          product_id: line.productId,
+          quantity: line.qty,
+        })),
+      };
+      const res = (await api.createOrder(payload)) as any;
+      const orderNum = res?.data?.order_number || res?.order_number || '';
+      toast.success(orderNum ? `Sale saved! Order #${orderNum}` : 'Sale saved successfully!');
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to complete sale');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const phone = (customerPhone || '').replace(/\D/g, '');
+    const linesSummary = totals.lines
+      .map((l) => `${l.product.name} x${l.qty} = ${money(l.lineTotal)}`)
+      .join('\n');
+    const message = `*DXN Order Summary*\nCustomer: ${customerName || 'Walk-in'}\n\n${linesSummary}\n\n*Total: ${money(totals.total)}*\nPV: ${formatPv(totals.pv)} PV\nPayment: ${paymentMethod}\nThank you!`;
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
 
   if (!isOpen) return null;
 
@@ -199,7 +260,9 @@ export function CartDrawer() {
                     />
                     <Select
                       value={paymentMethod}
-                      onChange={(e) => setCustomer({ paymentMethod: e.target.value as any })}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setCustomer({ paymentMethod: e.target.value as any })
+                      }
                     >
                       {PAYMENT_METHODS.map((pm) => (
                         <option key={pm.value} value={pm.value}>{pm.label}</option>
@@ -264,22 +327,22 @@ export function CartDrawer() {
 
             <div className="space-y-3">
               <Button
-                onClick={() => {
-                  // Checkout would go here
-                  toast('Checkout integration — order saved to outbox', {
-                    description: 'Sale queued for sync',
-                  });
-                }}
+                onClick={handleCheckout}
+                disabled={submitting || totals.lines.length === 0}
                 className="w-full"
               >
                 <Check className="w-4 h-4 mr-2" />
-                Save Sale — {money(totals.total)}
+                {submitting ? 'Saving Sale…' : `Save Sale — ${money(totals.total)}`}
               </Button>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={clearCart} className="flex-1">
                   Clear
                 </Button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
+                >
                   <Send className="w-4 h-4" />
                   WhatsApp
                 </button>

@@ -1,9 +1,8 @@
 /**
- * BottomNav — Mobile bottom navigation bar.
+ * BottomNav - Mobile bottom navigation bar.
  */
 
 import { Grid, Receipt, BarChart3, Settings } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 
 interface BottomNavProps {

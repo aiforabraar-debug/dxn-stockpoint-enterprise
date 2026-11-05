@@ -1,32 +1,29 @@
 /**
- * Catalog — Main point of sale page with product grid, search, filters, and cart.
+ * Catalog - Main point of sale page with product grid, search, filters, and cart.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, RefreshCw, Grid, Filter, AlertCircle } from 'lucide-react';
+import { Search, RefreshCw, Filter, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cart';
 import { useSyncStore } from '@/stores/sync';
 import { api } from '@/services/api';
 import { ProductCard } from '@/components/catalog/ProductCard';
-import { CartDrawer } from '@/components/cart/CartDrawer';
-import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Switch } from '@/components/ui/Switch';
-import { money, formatPv } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth';
+import { Product } from '@/types';
 
 export function Catalog() {
-  const { addItem, setTier, tier, clearCart } = useCartStore((state) => ({
+  const { addItem, setTier, tier } = useCartStore((state) => ({
     addItem: state.addItem,
     setTier: state.setTier,
     tier: state.tier,
-    clearCart: state.clearCart,
   }));
-  const { setSyncStatus, setRevision } = useSyncStore();
+  const { setSyncStatus } = useSyncStore();
   const { isAuthenticated } = useAuthStore();
 
   const [search, setSearch] = useState('');
@@ -34,23 +31,21 @@ export function Catalog() {
   const [lowOnly, setLowOnly] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
 
-  const { data: productsResponse, isLoading, error, refetch } = useQuery({
-    queryKey: ['products', search, category, lowOnly],
+  const { data: productsResponse, isLoading, refetch } = useQuery({
+    queryKey: ['products', category],
     queryFn: async () => {
-      const response = await api.getProducts({
-        search: search || undefined,
+      const response = (await api.getProducts({
         category: category !== 'all' ? category : undefined,
-      });
-      return response.data || [];
+      })) as { data?: Product[] };
+      return response.data ?? [];
     },
     enabled: isAuthenticated,
   });
 
-  const products: any[] = productsResponse || [];
+  const products: Product[] = productsResponse ?? [];
 
-  // Filter products
+  // Client-side filtering for search + low-stock
   const filteredProducts = products.filter((p) => {
-    if (category !== 'all' && p.category !== category) return false;
     if (lowOnly && p.stock_qty > p.low_stock_at) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -63,58 +58,36 @@ export function Catalog() {
     return true;
   });
 
-  // Extract unique categories
+  // Extract unique categories from server data
   useEffect(() => {
     const cats = [...new Set(products.map((p) => p.category))].sort();
     setCategories(cats);
   }, [products]);
 
   const handleAdd = useCallback(
-    (product: any) => {
-      return addItem(product);
+    (product: Product) => {
+      const result = addItem(product);
+      if (!result.ok && result.message) {
+        toast.error(result.message);
+      } else if (result.ok) {
+        toast.success(`${product.name} added to cart`);
+      }
+      return result;
     },
     [addItem]
   );
 
   const handleSync = async () => {
     try {
-      // Sync would call the API sync endpoint
       setSyncStatus('syncing');
-      // In a real app, this would fetch the sync feed
-      setTimeout(() => {
-        setSyncStatus('online');
-        toast('Synced successfully');
-      }, 1000);
-    } catch (err) {
+      await refetch();
+      setSyncStatus('online');
+      toast.success('Catalog synced');
+    } catch {
       setSyncStatus('error');
-      toast.error('Sync failed');
+      toast.error('Sync failed — check API connection');
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center text-center">
-        <div className="w-full max-w-md">
-          <Card className="p-8">
-            <div className="flex items-center justify-center mb-4">
-              <Grid className="w-12 h-12 text-primary-600" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">DXN Stockpoint</h2>
-            <p className="text-gray-500 mb-6">
-              Please sign in to access the point of sale.
-            </p>
-            <Button onClick={() => {}} className="w-full">
-              Sign in with Shop PIN
-            </Button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const totals = useCartStore.getState().getTotals(
-    new Map(products.map((p) => [p.id, p]))
-  );
 
   return (
     <div className="space-y-6">
@@ -123,33 +96,27 @@ export function Catalog() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Point of Sale</h1>
           <p className="text-gray-600">
-            {tier === 'member' ? 'Member pricing active' : 'Retail pricing'} •
-            {products.length} products in catalogue
+            {tier === 'member' ? 'Member pricing active' : 'Retail pricing'} ·{' '}
+            {isLoading ? 'Loading…' : `${products.length} products in catalogue`}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {isAuthenticated && (
-            <Button variant="outline" onClick={handleSync} size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Sync
-            </Button>
-          )}
-          <Button variant="ghost" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
+          <Button variant="outline" onClick={handleSync} size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Sync
           </Button>
         </div>
       </div>
 
-      {/* Alert banner for queued/failed sales */}
+      {/* Offline queue notice */}
       <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
         <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600" />
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-amber-800">Sales Queue</h3>
+            <h3 className="text-sm font-semibold text-amber-800">Offline-Ready</h3>
             <p className="text-xs text-amber-700">
-              Sales made while offline are queued and sync when connection returns.
+              Sales made while offline are queued and sync automatically when connection returns.
             </p>
           </div>
         </div>
@@ -167,18 +134,16 @@ export function Catalog() {
           />
         </div>
 
-        <div className="flex items-end gap-4">
-          <div className="flex items-center gap-3">
-            <Switch
-              checked={tier === 'member'}
-              onCheckedChange={(v) => setTier(v ? 'member' : 'retail')}
-            />
-            <div className="text-left">
-              <span className="text-sm font-medium text-gray-900">Member Pricing</span>
-              <p className="text-xs text-gray-500">
-                {tier === 'member' ? 'Members pay less' : 'Retail walk-in price'}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={tier === 'member'}
+            onCheckedChange={(v) => setTier(v ? 'member' : 'retail')}
+          />
+          <div className="text-left">
+            <span className="text-sm font-medium text-gray-900">Member Pricing</span>
+            <p className="text-xs text-gray-500">
+              {tier === 'member' ? 'DP price active' : 'MRP retail price'}
+            </p>
           </div>
         </div>
       </div>
@@ -188,7 +153,7 @@ export function Catalog() {
         <button
           onClick={() => setCategory('all')}
           className={cn(
-            'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+            'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0',
             category === 'all'
               ? 'bg-primary-600 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -201,7 +166,7 @@ export function Catalog() {
             key={cat}
             onClick={() => setCategory(cat)}
             className={cn(
-              'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+              'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0',
               category === cat
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -213,7 +178,7 @@ export function Catalog() {
         <button
           onClick={() => setLowOnly(!lowOnly)}
           className={cn(
-            'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+            'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 flex items-center',
             lowOnly
               ? 'bg-amber-50 text-amber-700 border border-amber-200'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -225,34 +190,44 @@ export function Catalog() {
       </div>
 
       {/* Product grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredProducts.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-gray-200 bg-white overflow-hidden animate-pulse">
+              <div className="h-48 bg-gray-200" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+                <div className="h-10 bg-gray-200 rounded" />
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No products found
-            </h3>
-            <p className="text-gray-500">
-              Try adjusting your search or filters.
-            </p>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Search className="w-8 h-8 text-gray-400" />
           </div>
-        ) : (
-          filteredProducts.map((product) => (
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+          <p className="text-gray-500 max-w-xs">
+            {products.length === 0
+              ? 'Connect to your backend server to load the DXN catalog.'
+              : 'Try adjusting your search or filters.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
+              tier={tier}
               onAdd={handleAdd}
             />
-          ))
-        )}
-      </div>
-
-      {/* Cart summary (desktop) */}
-      <div className="lg:block hidden">
-        <CartDrawer />
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

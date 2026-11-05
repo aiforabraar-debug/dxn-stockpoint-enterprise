@@ -1,11 +1,11 @@
 /**
- * Select — Styled select component.
+ * Select - Styled select component with controlled value support.
  */
 
-import { HTMLAttributes, forwardRef } from 'react';
+import { forwardRef, SelectHTMLAttributes } from 'react';
 import { cn } from '@/utils/cn';
 
-interface SelectProps extends HTMLAttributes<HTMLSelectElement> {}
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {}
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(({ className, ...props }, ref) => (
   <select

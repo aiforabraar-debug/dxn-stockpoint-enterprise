@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Cloud, Check, User, RefreshCw, Download, Trash2, Lock, Phone, MapPin } from 'lucide-react';
+import { Cloud, User, RefreshCw, Download, Trash2, Lock } from 'lucide-react';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { Card } from '@/components/ui/Card';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
 
 export function Settings() {
-  const { isAuthenticated, shop, setToken } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [apiBase, setApiBase] = useState(() => api.getBaseUrl());
   const [testing, setTesting] = useState(false);
 
@@ -53,16 +53,16 @@ export function Settings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
-      const response = await api.getSettings();
-      return response.data;
+      const response = (await api.getSettings()) as any;
+      return response?.data || response;
     },
     enabled: isAuthenticated,
   });
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (body: any) => {
-      const response = await api.updateSettings(body);
-      return response.data;
+      const response = (await api.updateSettings(body)) as any;
+      return response?.data || response;
     },
     onSuccess: () => {
       toast.success('Settings updated');
@@ -75,7 +75,7 @@ export function Settings() {
   const changePinMutation = useMutation({
     mutationFn: async (newPin: string) => {
       const response = await api.changeShopPin(newPin);
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       toast.success('PIN changed successfully');
@@ -247,7 +247,7 @@ export function Settings() {
               Export Backup
             </Button>
             <Button variant="outline" onClick={() => {}}>
-              <Trash2 className="w-4 h-4 mr-2" text-red-600 />
+              <Trash2 className="w-4 h-4 mr-2 text-red-600" />
               Reset Device
             </Button>
           </div>
