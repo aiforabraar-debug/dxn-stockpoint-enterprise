@@ -2,7 +2,7 @@
  * BottomNav — Mobile bottom navigation bar.
  */
 
-import { Grid, Receipt, Chart, Settings } from 'lucide-react';
+import { Grid, Receipt, BarChart3, Settings } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 
@@ -13,7 +13,7 @@ interface BottomNavProps {
 const NAV_ITEMS = [
   { path: '/catalog', label: 'Catalogue', icon: Grid },
   { path: '/orders', label: 'Orders', icon: Receipt },
-  { path: '/admin', label: 'Admin', icon: Chart },
+  { path: '/admin', label: 'Admin', icon: BarChart3 },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Grid, Receipt, Chart, Settings, User, Cart, RefreshCw, Logout } from 'lucide-react';
+import { Grid, Receipt, BarChart3, Settings, User, Cart, RefreshCw, Logout } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { useSyncStore } from '@/stores/sync';
 import { cn } from '@/utils/cn';
@@ -25,7 +25,7 @@ export function Header({ shop, onSignOut }: HeaderProps) {
   const routes = [
     { path: '/catalog', label: 'Catalogue', icon: Grid },
     { path: '/orders', label: 'Orders', icon: Receipt },
-    { path: '/admin', label: 'Admin', icon: Chart },
+    { path: '/admin', label: 'Admin', icon: BarChart3 },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
