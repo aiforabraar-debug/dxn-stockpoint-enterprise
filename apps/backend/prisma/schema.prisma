@@ -57,7 +57,7 @@ enum CourierStatus {
 
 // ── Shop ─────────────────────────────────────────────────────────────────────
 model Shop {
-  id                String   @id(default: uuid()) @db.Uuid
+  id                String   @id @default(uuid()) @db.Uuid
   name              String   @db.VarChar(120)
   slug              String   @unique @db.VarChar(80)
   whatsapp_number   String?  @db.VarChar(40)
@@ -87,7 +87,7 @@ model Shop {
 
 // ── User / Staff ─────────────────────────────────────────────────────────────
 model User {
-  id            String   @id(default: uuid()) @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
   shopId        String   @db.Uuid
   email         String   @unique @db.VarChar(255)
   passwordHash  String   @db.VarChar(255)
@@ -107,7 +107,7 @@ model User {
 
 // ── Auth Session / Token ─────────────────────────────────────────────────────
 model AuthSession {
-  id            String   @id(default: uuid()) @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
   userId        String   @db.Uuid
   shopId        String   @db.Uuid
   refreshToken  String   @unique @db.Text
@@ -127,7 +127,7 @@ model AuthSession {
 
 // ── Auth Attempt (brute force protection) ────────────────────────────────────
 model AuthAttempt {
-  id          String   @id(default: uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   shopId      String   @db.Uuid
   ipAddress   String   @db.VarChar(45)
   succeeded   Boolean  @default(false)
@@ -142,7 +142,7 @@ model AuthAttempt {
 
 // ── Product ──────────────────────────────────────────────────────────────────
 model Product {
-  id                String          @id(default: uuid()) @db.Uuid
+  id                String          @id @default(uuid()) @db.Uuid
   shopId            String          @db.Uuid
   sku               String          @db.VarChar(64)
   name              String          @db.VarChar(160)
@@ -173,7 +173,7 @@ model Product {
 
 // ── Customer ─────────────────────────────────────────────────────────────────
 model Customer {
-  id           String   @id(default: uuid()) @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
   shopId       String   @db.Uuid
   name         String   @db.VarChar(160)
   phone        String?  @db.VarChar(40)
@@ -195,7 +195,7 @@ model Customer {
 
 // ── Order ────────────────────────────────────────────────────────────────────
 model Order {
-  id              String        @id(default: uuid()) @db.Uuid
+  id              String        @id @default(uuid()) @db.Uuid
   shopId          String        @db.Uuid
   userId          String?       @db.Uuid
   customerId      String?       @db.Uuid
@@ -233,7 +233,7 @@ model Order {
 
 // ── Order Item ───────────────────────────────────────────────────────────────
 model OrderItem {
-  id          String   @id(default: uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   orderId     String   @db.Uuid
   productId   String   @db.Uuid
   sku         String   @db.VarChar(64)
@@ -252,7 +252,7 @@ model OrderItem {
 
 // ── Stock Movement (audit trail) ─────────────────────────────────────────────
 model StockMovement {
-  id          String             @id(default: uuid()) @db.Uuid
+  id          String             @id @default(uuid()) @db.Uuid
   shopId      String             @db.Uuid
   productId   String             @db.Uuid
   orderId     String?            @db.Uuid
@@ -274,7 +274,7 @@ model StockMovement {
 
 // ── Courier Settings ─────────────────────────────────────────────────────────
 model CourierSetting {
-  id           String   @id(default: uuid()) @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
   shopId       String   @unique @db.Uuid
   base_url     String   @default("https://portal.packzy.com/api/v1") @db.VarChar(500)
   api_key      String?  @db.VarChar(500)
@@ -289,7 +289,7 @@ model CourierSetting {
 
 // ── Courier Order ────────────────────────────────────────────────────────────
 model CourierOrder {
-  id                 String      @id(default: uuid()) @db.Uuid
+  id                 String      @id @default(uuid()) @db.Uuid
   shopId             String      @db.Uuid
   orderId            String      @unique @db.Uuid
   consignment_id     String?     @db.VarChar(128)
@@ -312,7 +312,7 @@ model CourierOrder {
 
 // ── Audit Log ────────────────────────────────────────────────────────────────
 model AuditLog {
-  id        String   @id(default: uuid()) @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
   shopId    String   @db.Uuid
   userId    String?  @db.Uuid
   action    String   @db.VarChar(100)
