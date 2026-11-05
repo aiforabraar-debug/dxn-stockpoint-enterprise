@@ -40,24 +40,32 @@ export async function createOrder(
   // Resolve customer
   let customerId: string | undefined = data.customerId;
   if (!customerId && data.customer_phone) {
-    const customer = await prisma.customer.upsert({
-      where: { shopId_phone: { shopId, phone: data.customer_phone } },
-      create: {
-        shopId,
-        name: data.customer_name,
-        phone: data.customer_phone,
-        member_id: data.dxn_member_id || null,
-        is_member: data.is_member,
-        total_orders: 0,
-        total_spent: 0,
-        total_pv: 0,
-      },
-      update: {
-        name: data.customer_name,
-        ...(data.dxn_member_id ? { member_id: data.dxn_member_id } : {}),
-        is_member: data.is_member,
-      },
+    let customer = await prisma.customer.findFirst({
+      where: { shopId, phone: data.customer_phone },
     });
+    if (!customer) {
+      customer = await prisma.customer.create({
+        data: {
+          shopId,
+          name: data.customer_name,
+          phone: data.customer_phone,
+          member_id: data.dxn_member_id || null,
+          is_member: data.is_member,
+          total_orders: 0,
+          total_spent: 0,
+          total_pv: 0,
+        },
+      });
+    } else {
+      customer = await prisma.customer.update({
+        where: { id: customer.id },
+        data: {
+          name: data.customer_name,
+          ...(data.dxn_member_id ? { member_id: data.dxn_member_id } : {}),
+          is_member: data.is_member,
+        },
+      });
+    }
     customerId = customer.id;
   }
 
@@ -290,7 +298,6 @@ export async function getDashboard(shopId: string) {
   const [
     totalOrders,
     totalRevenue,
-    totalPV,
     todayOrders,
     todayRevenue,
     lowStockProducts,
@@ -359,3 +366,13 @@ export async function getSalesReport(shopId: string, from: Date, to: Date) {
     orders,
   };
 }
+
+export const orderService = {
+  createOrder,
+  getOrder,
+  listOrders,
+  updateOrderStatus,
+  getReceipt,
+  getDashboard,
+  getSalesReport,
+};

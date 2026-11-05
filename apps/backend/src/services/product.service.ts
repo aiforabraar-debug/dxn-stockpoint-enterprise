@@ -238,3 +238,16 @@ export async function getCategories(shopId: string) {
 
   return categories.map((c) => c.category);
 }
+
+export const productService = {
+  listProducts,
+  getProduct,
+  createProduct,
+  updateProduct,
+  archiveProduct,
+  restoreProduct,
+  adjustStock,
+  stockTake,
+  getStockMovements,
+  getCategories,
+};

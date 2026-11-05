@@ -34,3 +34,5 @@ export const courierSettingsSchema = z.object({
     webhook_token: z.string().optional().nullable(),
   }),
 });
+
+export { syncQuerySchema } from './sync';

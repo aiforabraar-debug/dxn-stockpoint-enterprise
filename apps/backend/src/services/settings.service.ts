@@ -78,3 +78,9 @@ export async function changeShopPin(shopId: string, newPin: string) {
 
   return { message: 'PIN updated successfully', shop };
 }
+
+export const settingsService = {
+  getSettings,
+  updateSettings,
+  changeShopPin,
+};

@@ -10,7 +10,7 @@ dotenv.config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).default(4000),
+  PORT: z.coerce.number().default(4000),
   API_BASE_URL: z.string().url().default('http://localhost:4000'),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
@@ -23,7 +23,7 @@ const envSchema = z.object({
   ADMIN_PIN: z.string().min(4, 'ADMIN_PIN must be at least 4 characters').default('2468'),
   ADMIN_API_KEY: z.string().min(1, 'ADMIN_API_KEY is required'),
 
-  BCRYPT_SALT_ROUNDS: z.string().transform(Number).default(12),
+  BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
 
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
 

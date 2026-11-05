@@ -6,7 +6,20 @@
 /// <reference types="vite/client" />
 import { ApiResponse } from '@/types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+export function getApiBase(): string {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem('dxn_api_base');
+    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
+  }
+  return ((import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:4000').replace(/\/+$/, '');
+}
+
+export function setApiBase(url: string): void {
+  if (typeof localStorage !== 'undefined') {
+    const clean = url.trim().replace(/\/+$/, '');
+    localStorage.setItem('dxn_api_base', clean);
+  }
+}
 
 class ApiError extends Error {
   public status: number;
@@ -54,7 +67,7 @@ async function request<T>(
     }
   }
 
-  const url = `${API_BASE}${path}`;
+  const url = `${getApiBase()}${path}`;
 
   let response: Response;
   try {
@@ -196,6 +209,8 @@ export const api = {
 
   // ── Health ─────────────────────────────────────────────────────────────────
   health: () => request('/api/v1/health'),
+  getBaseUrl: () => getApiBase(),
+  setBaseUrl: (url: string) => setApiBase(url),
 };
 
 export { ApiError };

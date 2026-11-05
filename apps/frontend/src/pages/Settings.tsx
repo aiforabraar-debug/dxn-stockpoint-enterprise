@@ -2,7 +2,7 @@
  * Settings — Shop profile, connection, PIN, and sync settings.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Cloud, Check, User, RefreshCw, Download, Trash2, Lock, Phone, MapPin } from 'lucide-react';
 import { api } from '@/services/api';
@@ -14,7 +14,41 @@ import { toast } from 'sonner';
 
 export function Settings() {
   const { isAuthenticated, shop, setToken } = useAuthStore();
-  const [apiBase, setApiBase] = useState('');
+  const [apiBase, setApiBase] = useState(() => api.getBaseUrl());
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    setApiBase(api.getBaseUrl());
+  }, []);
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    const start = Date.now();
+    try {
+      const cleanUrl = (apiBase || '').trim().replace(/\/+$/, '');
+      const res = await fetch(`${cleanUrl}/api/v1/health`);
+      const elapsed = Date.now() - start;
+      if (res.ok) {
+        toast.success(`Server reachable! Latency: ${elapsed}ms`);
+      } else {
+        toast.error(`Server returned HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      toast.error(`Cannot connect to ${apiBase}: ${err.message || 'Network error'}`);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSaveConnection = () => {
+    const cleanUrl = (apiBase || '').trim().replace(/\/+$/, '');
+    if (!cleanUrl) {
+      toast.error('Please enter a valid API URL');
+      return;
+    }
+    api.setBaseUrl(cleanUrl);
+    toast.success('API Base URL saved');
+  };
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -100,8 +134,12 @@ export function Settings() {
               />
             </div>
             <div className="flex gap-3">
-              <Button onClick={() => {}}>Test Connection</Button>
-              <Button variant="ghost" onClick={() => {}}>Save & Sync</Button>
+              <Button onClick={handleTestConnection} disabled={testing}>
+                {testing ? 'Testing…' : 'Test Connection'}
+              </Button>
+              <Button variant="ghost" onClick={handleSaveConnection}>
+                Save & Sync
+              </Button>
             </div>
             <p className="text-xs text-gray-500">
               Both the web app and Android app use the same API address to stay in sync.

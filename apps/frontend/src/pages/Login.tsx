@@ -16,6 +16,39 @@ export function Login() {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [serverUrl, setServerUrl] = useState(() => api.getBaseUrl());
+  const [testingServer, setTestingServer] = useState(false);
+
+  const handleTestServer = async () => {
+    setTestingServer(true);
+    const start = Date.now();
+    try {
+      const clean = (serverUrl || '').trim().replace(/\/+$/, '');
+      const res = await fetch(`${clean}/api/v1/health`);
+      const elapsed = Date.now() - start;
+      if (res.ok) {
+        toast.success(`Connected! Latency: ${elapsed}ms`);
+      } else {
+        toast.error(`Server returned HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      toast.error(`Cannot connect to ${serverUrl}: ${err.message || 'Network error'}`);
+    } finally {
+      setTestingServer(false);
+    }
+  };
+
+  const handleSaveServer = () => {
+    const clean = (serverUrl || '').trim().replace(/\/+$/, '');
+    if (!clean) {
+      toast.error('Please enter a server URL');
+      return;
+    }
+    api.setBaseUrl(clean);
+    toast.success('Server URL saved');
+    setShowServerConfig(false);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +117,40 @@ export function Login() {
             )}
           </Button>
         </form>
+
+        <div className="mt-4 pt-3 border-t border-gray-100 text-center">
+          {!showServerConfig ? (
+            <button
+              type="button"
+              onClick={() => setShowServerConfig(true)}
+              className="text-xs text-primary-700 hover:underline inline-flex items-center gap-1"
+            >
+              <span>Server: {serverUrl}</span>
+              <span className="text-gray-400">(change)</span>
+            </button>
+          ) : (
+            <div className="space-y-2 text-left bg-gray-50 p-3 rounded-lg border border-gray-200 mt-2">
+              <label className="text-xs font-medium text-gray-700">API Server URL</label>
+              <Input
+                value={serverUrl}
+                onChange={(e) => setServerUrl(e.target.value)}
+                placeholder="https://dxn-stockpoint-api.onrender.com"
+                className="text-xs"
+              />
+              <div className="flex gap-2 pt-1">
+                <Button type="button" size="sm" onClick={handleTestServer} disabled={testingServer}>
+                  {testingServer ? 'Testing…' : 'Test'}
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={handleSaveServer}>
+                  Save
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setShowServerConfig(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col items-center gap-2">
           <p className="text-xs text-gray-500">Default PIN: 2468</p>

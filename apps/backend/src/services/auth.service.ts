@@ -221,3 +221,12 @@ export async function getMe(userId: string) {
     },
   };
 }
+
+export const authService = {
+  shopLogin,
+  refreshShopToken,
+  changeShopPin,
+  registerUser,
+  loginUser,
+  getMe,
+};

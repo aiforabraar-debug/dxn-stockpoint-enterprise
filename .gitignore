@@ -56,3 +56,9 @@ coverage/
 *.crt
 *.jks
 *.keystore
+
+resume-pending-task.json
+apk.zip
+
+.gradle/
+android/DXNStockpoint/.gradle/

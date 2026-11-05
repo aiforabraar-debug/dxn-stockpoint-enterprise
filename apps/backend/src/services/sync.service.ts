@@ -77,3 +77,8 @@ export async function getSyncStatus(shopId: string) {
     status: 'ok',
   };
 }
+
+export const syncService = {
+  getSyncFeed,
+  getSyncStatus,
+};

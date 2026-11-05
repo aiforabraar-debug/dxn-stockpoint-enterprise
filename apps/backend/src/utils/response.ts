@@ -10,6 +10,7 @@ interface Meta {
   limit?: number;
   total?: number;
   revision?: number;
+  hasMore?: boolean;
 }
 
 export function success<T>(
