@@ -78,7 +78,10 @@ model Shop {
   customers    Customer[]
   orders       Order[]
   stockMovements StockMovement[]
+  authSessions AuthSession[]
+  authAttempts AuthAttempt[]
   courierSettings CourierSetting?
+  courierOrders CourierOrder[]
   auditLogs    AuditLog[]
 
   @@index([slug])
@@ -100,6 +103,8 @@ model User {
 
   shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   orders        Order[]
+  authSessions  AuthSession[]
+  auditLogs     AuditLog[]
 
   @@index([shopId])
   @@index([email])
@@ -221,6 +226,7 @@ model Order {
   user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   customer     Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items        OrderItem[]
+  stockMovements StockMovement[]
   courierOrder CourierOrder?
 
   @@index([shopId])
@@ -320,7 +326,7 @@ model AuditLog {
   entity_id String?  @db.VarChar(128)
   old_values Json?
   new_values Json?
-  ip_address String? @db.VarCat(45)
+  ip_address String? @db.VarChar(45)
   created_at DateTime @default(now())
 
   shop  Shop  @relation(fields: [shopId], references: [id], onDelete: Cascade)
