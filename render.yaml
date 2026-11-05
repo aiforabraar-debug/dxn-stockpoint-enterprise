@@ -1,7 +1,13 @@
 # =============================================================================
 # DXN Stockpoint Enterprise — Render Deployment
-# One-click deploy to Render (free tier)
+# One-click deploy to Render Blueprint
 # =============================================================================
+
+databases:
+  - name: dxn-stockpoint-db
+    databaseName: dxn_stockpoint
+    user: dxn_user
+    plan: free
 
 services:
   # ── Backend API ────────────────────────────────────────────────────────────
@@ -30,19 +36,11 @@ services:
       - key: ADMIN_API_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://aiforabraar-debug.github.io
+        value: "https://aiforabraar-debug.github.io,https://dxn-stockpoint-frontend.onrender.com,http://localhost:5173"
       - key: LOG_LEVEL
         value: info
 
-  # ── PostgreSQL Database ────────────────────────────────────────────────────
-  - type: pserv
-    name: dxn-stockpoint-db
-    env: docker
-    plan: free
-    ipAllowList: []
-    envVars: []
-
-  # ── Frontend (Static Site) ─────────────────────────────────────────────────
+  # ── Frontend (Static Site Backup) ──────────────────────────────────────────
   - type: web
     name: dxn-stockpoint-frontend
     env: static

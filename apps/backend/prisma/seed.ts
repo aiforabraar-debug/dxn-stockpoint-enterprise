@@ -73,7 +73,9 @@ async function main() {
   const pinHash = await hashPassword('2468');
   const shop = await prisma.shop.upsert({
     where: { slug: 'mohammadpur-stock-point' },
-    update: {},
+    update: {
+      admin_pin_hash: pinHash,
+    },
     create: {
       name: 'Mohammadpur Stock Point',
       slug: 'mohammadpur-stock-point',
@@ -88,7 +90,7 @@ async function main() {
     },
   });
 
-  console.log(`✓ Shop created: ${shop.name} (${shop.id})`);
+  console.log(`✓ Shop created/updated: ${shop.name} (${shop.id})`);
 
   // Create default admin user
   const adminPasswordHash = await hashPassword('admin123');
@@ -104,12 +106,25 @@ async function main() {
     },
   });
 
-  console.log(`✓ Admin user created: ${adminUser.email}`);
+  console.log(`✓ Admin user created/updated: ${adminUser.email}`);
 
-  // Seed products
+  // Seed products idempotently with upsert
   for (const item of DXN_CATALOGUE) {
-    await prisma.product.create({
-      data: {
+    await prisma.product.upsert({
+      where: {
+        shopId_sku: {
+          shopId: shop.id,
+          sku: item.sku,
+        },
+      },
+      update: {
+        name: item.name,
+        category: item.category,
+        retail_price: item.retail,
+        member_price: item.member,
+        pv_points: item.pv,
+      },
+      create: {
         shopId: shop.id,
         sku: item.sku,
         name: item.name,
@@ -127,7 +142,7 @@ async function main() {
     });
   }
 
-  console.log(`✓ Seeded ${DXN_CATALOGUE.length} products`);
+  console.log(`✓ Seeded/verified ${DXN_CATALOGUE.length} products`);
 
   console.log('🎉 Seed complete!');
   console.log(`
